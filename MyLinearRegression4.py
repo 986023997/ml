@@ -23,7 +23,27 @@ class SimpleLinearRegression4:
         return res * 2 / len(x_b)
         """
         #向量化的方式
-        return x.b.T.dot(x.b.dot(theta) - y) * 2. / len(y)
+        return x_b.T.dot(x_b.dot(theta) - y) * 2. / len(y)
+    
+    def dJ_sgd(self, theta, x_b_i, y_i):
+        return x_b_i.T.dot(x_b_i.dot(theta) - y_i) * 2.
+    
+    def learning_rate(self,t):
+        t0 = 5
+        t1 = 50
+        return t0/(t + t1)
+    
+    def sgd(self, x_b, y, initial_theta, n_iters=1e4):
+        theta = initial_theta
+        iter_count = 0  
+        for iter_ in range(n_iters):
+            rand_i = np.random.randint(len(x_b))
+            gradient = self.dJ_sgd(theta, x_b[rand_i], y[rand_i]) 
+            last_theta = theta  # 移除多余的分号
+            theta = theta - self.learning_rate(iter_) * gradient
+        return theta
+    
+    
     
     def gradient_descent(self, x_b, y, initial_theta, eta, n_iters=1e4, epsilon=1e-8):
         theta = initial_theta
@@ -51,7 +71,21 @@ class SimpleLinearRegression4:
         self.interception_ = self._theta[0]
         self.coef_ = self._theta[1:]
         return self
-        
+    
+    def fit_sgd(self, x_train, y_train, n_iters=1e4):
+        assert x_train.shape[0] == y_train.shape[0], "the size of x_train must be equal to the size of y_train"
+
+        # 确保输入是二维数组
+        if x_train.ndim == 1:
+            x_train = x_train.reshape(-1, 1)
+
+        x_b = np.hstack([np.ones((len(x_train), 1)), x_train])
+        initial_theta = np.zeros(x_b.shape[1])
+        self._theta = self.sgd(x_b, y_train, initial_theta, n_iters)
+        self.interception_ = self._theta[0]
+        self.coef_ = self._theta[1:]
+        return self
+
     def predict(self, x_predict):
         assert self.coef_ is not None and self.interception_ is not None, "must fit before predict"
         
@@ -67,6 +101,8 @@ class SimpleLinearRegression4:
     def score(self, x_test, y_test):
         y_predict = self.predict(x_test)
         return r2_score(y_test, y_predict)
+    
+    
     
     def __repr__(self):
         return "SimpleLinearRegression4()"
